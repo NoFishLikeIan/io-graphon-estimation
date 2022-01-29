@@ -1,0 +1,371 @@
+\documentclass[american, abstract=on]{scrartcl}
+
+    \newcommand{\lang}{en}
+
+    \usepackage{babel}
+    \usepackage[utf8]{inputenc}
+
+    \usepackage{csquotes}
+
+    \usepackage{amsmath, amssymb, mathtools, bbm}
+    \usepackage{bm}
+
+
+    \usepackage{graphicx}
+    \usepackage{wrapfig}
+    \usepackage{tikz} 
+    \usepackage{relsize}
+    \usepackage{makecell}
+    \usepackage{booktabs}
+    \usepackage{subcaption}
+    \usepackage{float}
+    \usepackage{multirow}  
+    
+    % Refs
+    \usepackage{hyperref}
+    \usepackage{cleveref}
+    \hypersetup{
+        colorlinks = true, 
+        urlcolor = blue,
+        linkcolor = blue, 
+        citecolor = blue 
+      }      
+
+    \usepackage{subfiles} % Load last
+
+    % Paths
+
+    % Formatting
+    \setlength{\parindent}{0em}
+    \setlength{\parskip}{0.5em}
+    \setlength{\fboxsep}{1em}
+    \newcommand\headercell[1]{\smash[b]{\begin{tabular}[t]{@{}c@{}} #1 \end{tabular}}}
+
+
+    % Graphs
+
+    % Math commands
+
+    \newtheorem{theorem}{Theorem}[section]
+    \newtheorem{proof}{Proof}[theorem]
+    \newtheorem{definition}{Definition}[section]
+
+    \newcommand{\diff}{\text{d}}
+    \renewcommand{\Re}{\mathbb{R}}
+    \newcommand{\E}{\mathbb{E}}
+    \newcommand{\V}{\mathbb{V}}
+    \renewcommand{\P}{\mathbb{P}}
+    \newcommand{\matr}[1]{\mathbf{#1}}
+    \newcommand{\T}{\matr{T}}
+    \newcommand{\vect}{\text{vec}}
+    \newcommand{\uI}[2][s]{\int^1_0 #2 \ \text{d} #1}
+
+    \DeclarePairedDelimiter\round{\lceil}{\rfloor}
+
+    % Bibliography
+
+    \usepackage[bibencoding=utf8, style=apa]{biblatex}
+    % \addbibresource{graphon-estimation.bib}
+
+    \newcommand{\citein}[1]{\citeauthor{#1} (\citeyear{#1})}
+
+    \newcommand{\DI}[2][y]{\int^1_0 #2 \ \text{d} #1}
+    \newcommand{\DInf}[2][y]{\int_{\Re} #2 \ \text{d} #1}
+
+    \newcommand\notes[1]{\textcolor{teal}{\textbf{#1}}}
+    \DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+    % Make title page
+
+    \author{Andrea Titton}
+    \title{Graphon Estimation}
+    \setcounter{section}{-1} % Start indexing of sections at 0
+\begin{document}
+
+\maketitle
+
+\section{Notation}
+
+Let, for an integer $n$,
+
+\begin{equation}
+  [n] := \{1, 2, 3, \ldots, n \}.
+\end{equation}
+
+\section{Model elicitation}
+
+A production network is a directed weighted graph $(V, E, w)$, where $V = [n]$ is the set of nodes, $E = [n] \times [n]$ is the set of edges, and 
+
+\begin{equation}
+  w: E \to [0, 1]
+\end{equation}
+
+is a function that assigns a weight to each edge. This can be represented by a matrix $\matr{W} \in \Re^{n \times n}$ with 
+
+\begin{equation}
+  \matr{W}_{i, j} = w(i, j).
+\end{equation}
+
+Here we model the network as a realization of random draws from a bivariate nonnegative measurable function $f: [0, 1]^2 \to [0, 1]$, known as a (k-)graphon, namely
+
+\begin{equation}
+  \begin{split}
+    \matr{W}_{i, j} &= f(u_i, U_j) \text{ for } \\
+    u_i, U_j &\overset{\text{i.i.d.}}{\sim} U(0, 1) \text{ and } i, j \in [n].
+  \end{split}
+\end{equation}
+
+As shown by Aldous any estimator $\hat{f}$ of $f$ is also an estimator of $(x, y) \mapsto f(\sigma(x), \sigma(y))$ for any measure preserving bijection $\sigma:[0, 1] \to [0, 1]$. \notes{Cite previous strategies}. Hereafter I will use $f_\sigma$ to indicate the composition of a graphon with one such bijection, $\sigma \circ f = f(\sigma(x), \sigma(y))$.
+
+\subsection{Sorting strategy}
+
+Let $\pi: [0, 1] \to [0, 1]$ be a measure preserving bijection such that
+
+\begin{equation} \label{eq:degree}
+  d_{\pi}(x) := \DI{f_\pi(x, y)}
+\end{equation}
+
+is non-decreasing, namely
+
+\begin{equation}
+  d_{\pi}(x) - d_{\pi}(z) = \DI{f_\pi(x, y) - f_\pi(z, y)} \geq 0.
+\end{equation}
+
+\notes{Find one that always exists}
+
+\subsection{Estimating the degree function}
+
+Let the average in-degree of a node $i$ be 
+
+\begin{equation}
+    \frac{1}{n} \sum^n_{j = 1} \matr{W}_{i, j}.
+\end{equation}
+
+We can find a column permutation $\Pi: [n] \to [n]$, such that the permuted matrix $\matr{W}[\Pi]$ has increasing average in-degree, namely
+
+\begin{equation}
+  \begin{split}
+    D^{(i)} &= \frac{1}{n} \sum^n_{j = 1} \matr{W}[\Pi]_{i, j} \text{ and } \\
+    D^{(i)} &\geq D^{(j)} \text{ if } i > j.
+  \end{split}
+\end{equation}
+
+Note that, under our model, $D^{(i)}$ is a function of the vector of i.i.d. random variables $U = (U_1, U_2, \ldots, U_n)$,
+
+\begin{equation} \label{eq:estimator}
+  D^{(i)}(U) =\frac{1}{n} \sum^n_{j = 1} f_{\pi}(u_i, U_j).
+\end{equation}
+
+The vector $D = (D^1(U), D^2(U), \ldots, D^n(U))$ will then be our estimator of $d_\pi$. Now, take a quantile $q \in [0, 1]$. For a given size $n$, let $z_n: [0, 1] \to [n]$ 
+
+\begin{equation}
+  z_n(q) = \round*{(n-1)q + 1}
+\end{equation}
+
+where 
+\begin{equation}
+  \round*{x} = \begin{cases}
+    \lceil x \rceil &\text{if } x - \lfloor x \rfloor > \frac{1}{2} \\
+    \lfloor x \rfloor &\text{if } x - \lfloor x \rfloor \leq \frac{1}{2}
+  \end{cases}.
+\end{equation}
+
+$z_n$ maps a quantile to a finite index. In the next sections, I will show that $D^{z_n(q)}(U)$ converges in probability to $d_{\pi}(q)$. This will be done by proving three intermediate results.
+
+\begin{enumerate}
+  \item Taking an index $j$, the probability that the degree estimator (\ref{eq:estimator}) and the theoretical degree function (\ref{eq:degree}), evaluated at $j / n$, differ by more than some $\varepsilon > 0$ falls exponentially.
+  \item If one uses $z_n(q)$ to map a quantile to an index, the probability that the $z_n(q)$-th smallest uniform variable of $U$ differs from its expected value by more than $\varepsilon$ falls linearly. 
+  \item The distance between the expected value of the $z_n(q)$-th smallest uniform variable of $U$ and $q$ falls linearly.
+\end{enumerate}
+
+These three point address the three sources of uncertainty in our model. First, I show that if we did not have uncertainty about where the function is evaluated, our estimate converges in probability pointwise to $d_\pi$. Second and third, I show that, as the sampling increases, the $z_n(q)$-th smallest uniform random variable converges in probability to $q$.
+
+\subsubsection{Convergence in probability of the estimator, for a fixed index}
+
+
+The proof relies on the \textit{bounded difference inequality}.
+
+\begin{definition}
+  Let $\phi: \Re^n \to \Re$. $\phi$ satisfies the bounded difference assumption if there exists a vector of constants $c_1, \ldots, c_n \geq 0$ such that
+  
+  \begin{equation}
+    \sup_{x_1, x_2, \ldots, x_n, x_k^\prime \in \Re} \lvert \phi(x_1, \ldots, x_k, \ldots x_n) -  \phi(x_1, \ldots, x_k^\prime, \ldots x_n)\rvert \leq c_k.
+  \end{equation}
+
+  That is, if we modify the $k$-th entry of the function, keeping all other constant, the function value changes at most by $c_k$.
+\end{definition}
+
+
+\begin{theorem}
+  
+  Given a sequence of independent random variables $X$, if $\phi$ satisfies the bounded difference assumption, with bounds $c_1, \ldots, c_n$, then, for any $\varepsilon > 0$,
+  
+  \begin{equation}
+    \P\Big(\lvert \phi(X) - \E_{X} \phi(X) \rvert > \varepsilon \Big) \leq \exp\left(-2\varepsilon^2 \Bigg/ \sum^n_{i = 1} c_i^2 \right).
+  \end{equation}
+\end{theorem}
+
+We first need to prove that $D^{(j)}$ does satisfy the bounded difference assumption. Consider the difference
+
+\begin{equation*}
+  \begin{split}
+    &\sup_{x_1, x_2, \ldots, x_n, x_k^\prime \in \Re}  \lvert D^{(j)}(x_1, \ldots, x_k, \ldots x_n) -  D^{(j)}(x_1, \ldots, x_k^\prime, \ldots x_n) \rvert \\
+    = \frac{1}{n} &\sup_{x_1, x_2, \ldots, x_n, x_k^\prime \in \Re}  \Bigg\lvert \overbrace{\sum_{j \neq k} f_\pi(x_k, x_j) - \sum_{j \neq k} f_\pi(x_k, x_j)}^{= 0} + f_\pi(x_i, x_k) - f_\pi(x_i, x_k^\prime) \Bigg\rvert \\
+    = \frac{1}{n} &\underbrace{\sup_{x_k, x_k^\prime \in \Re} \Big\lvert f_\pi(x_i, x_k) - f_\pi(x_i, x_k^\prime) \Big\rvert}_{\leq 1} \leq \frac{1}{n},
+  \end{split}
+\end{equation*}
+
+where I have used $0 \leq f \leq 1$. This implies that, for any $\varepsilon > 0$
+
+\begin{equation}
+  \P\Big( \lvert D^{(j)}(U) - \E D^{(j)}(U) \rvert > \varepsilon\Big) \leq \exp\left(-2n \ \varepsilon^2 \right).
+\end{equation}
+
+Now, opening up $\E \ D^{(j)}(U)$,
+
+\begin{equation}
+  \begin{split}
+    \E \ D^{(j)}(U) &= \E \ \frac{1}{n} \sum^n_{k = 1} f_{\pi}(k, U_k) \\
+    &= \frac{1}{n} \sum^n_{k = 1} \E \ f_{\pi}(j / n, U_k) \\
+    &= \E \ f_{\pi}(j / n, U_1) \text{ by independence of } U_i \\
+    &= d_\pi(j / n)
+  \end{split}
+\end{equation}
+
+\subsubsection[Smallest uniform]{Convergence of the $z_n(q)$-th smallest uniform random variable}
+
+The random variable defined as the $z_n(q)$-th smallest value of a vector of uniform independent random variables follows a beta distribution with parameters
+
+\begin{equation} \label{eq:distribtuion}
+  u_{z_n(q)} \sim \text{Beta}\Big(z_n(q), \  n + 1 - z_n(q)\Big).
+\end{equation}
+
+This allows us to derive two results. First, by Chebyshev's inequality, for any $\varepsilon > 0$,
+
+\begin{equation}
+  \begin{split}
+    \P\Big( \abs*{u_{z_n(q)} - \E \ u_{z_n(q)}} > \varepsilon \Big) &\leq \frac{\V \ u_{z_n(q)}}{\varepsilon^2} \leq \frac{z_n(q)}{(n+1)^2  \varepsilon^2}
+  \end{split}
+\end{equation}
+
+\subsubsection[Error of indexing]{Convergence of $z_n(q)$}
+
+A second result we can derive from (\ref{eq:distribtuion}) is 
+
+\begin{equation}
+  \E \ u_{z_n(q)} = \frac{z_n(q)}{n + 1} = \frac{\round*{(n-1) \ q + 1}}{n+1}.
+\end{equation}
+
+Looking at 
+
+\begin{equation}
+  \abs*{\E \ u_{z_n(q)} - q} = \abs*{\frac{\round*{(n-1) \ q + 1}}{n+1} - q} \leq \frac{5}{3n} \notes{ (easy to prove, not done yet) }
+\end{equation}
+
+\subsection{Putting it all together}
+
+Now we know that
+
+\begin{enumerate}
+  \item $D^{(kn)} \xrightarrow{prob.} d_{\pi}(k)$ exponentially, if $k \ n$ is a non-random integer.
+  \item $u_{z_n(q)} \xrightarrow{prob.} \E u_{z_n(q)}$ linearly.
+  \item $\E u_{z_n(q)} \rightarrow q$ linearly.
+\end{enumerate}
+
+\notes{What conditions do we need to impose on $d$ to have $D^{z_n(q)} \xrightarrow{prob.} d_\pi(q)$? Is the speed of convergence sufficient?}
+
+\iffalse
+
+What is left to prove is that 
+
+\begin{equation}
+  \E_{U} D^{z_n(q)}(U) \xrightarrow{p.} d_\pi(q).
+\end{equation}
+
+First note that since $u_1, u_2, \ldots u_n$ are independent
+
+\begin{equation}
+  \begin{split}
+    \E \ D^{z_n(q)}(U) &= \E \ \frac{1}{n} \sum^n_{j = 1} f_{\pi}(u_i, U_j) \\
+    &= \frac{1}{n} \sum^n_{j = 1} \E \ f_{\pi}(u_{z_n(q)}, U_j) = \E \ f_{\pi}(u_{z_n(q)}, u)
+  \end{split}
+\end{equation}
+
+where $u \sim U(0, 1)$ and $u_{z_n(q)}$ is the $z_n(q)$-th smallest uniform number from a sequence of $n$ uniform independent random variables. \notes{Are these independent?}. By Fubini's theorem
+
+\begin{equation}
+  \E \ f_{\pi}(u_{z_n(q)}, u) = \E_{u_{z_n(q)}} d_\pi(u_{z_n(q)}).
+\end{equation}
+
+It is known that the $z_n(q)$-th smallest uniform number follows a beta distribution
+
+\begin{equation}
+  u_{z_n(q)} \sim \text{Beta}(z_n(q), n + 1 - z_n(q))
+\end{equation}.
+
+Then we can write 
+
+\begin{equation}
+  \E_{u_{z_n(q)}} d_\pi(u_{z_n(q)}) = \uI[x]{d_\pi(x) \ \text{d}F_{u_{z_n(q)}}(x)}
+\end{equation}
+
+With a slight of hand and by the dominated convergence theorem
+
+\begin{equation}
+  \begin{split}
+    \lim_{n \rightarrow \infty} \uI[x]{d_\pi(x) \ \text{d}F_{u_{z_n(q)}}(x)} &= \uI[x]{d_\pi(x) \ \left( \lim_{n \rightarrow \infty} f_{u_{z_n(q)}}(x)\right)} \\
+    &= \uI[x]{d_\pi(x) \ \mathbbm{1}\{x = q\}} = d_\pi(q)
+  \end{split}
+\end{equation}
+
+\fi
+
+\iffalse
+\subsection{A short example}
+
+Consider a non-continuous but measurable function 
+
+\begin{equation} \label{eq:graphon}
+  f(\pi(x), \pi(y)) = \begin{cases}
+    \sin(x y) &\text{if } \frac{1}{5} \leq xy \leq \frac{1}{4} \\
+    2x &\text{otherwise}
+  \end{cases}
+\end{equation}
+
+and one of its permutations
+
+\begin{equation} \label{eq:graphon_perm}
+  f(\sigma(x), \sigma(y)) \text{ with } \sigma(x) = \left(x + \frac{1}{2}\right) \mod{1}
+\end{equation}
+
+plotted in Figure \ref{fig:graphon} and \ref{fig:graphon_perm}.
+
+\begin{figure}[H]
+  \begin{subfigure}[b]{.45\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{plots/graphon.pdf}
+    \caption{Contour plot of $f^\pi$}
+    \label{fig:graphon}
+  \end{subfigure}
+  \begin{subfigure}[b]{.45\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{plots/perm_graphon.pdf}
+    \caption{Contour plot of $f^\sigma$}
+    \label{fig:graphon_perm}
+  \end{subfigure}
+\end{figure}
+
+Now letting $n = 150$, we can sample from both graphons (\ref{eq:graphon} and \ref{eq:graphon_perm}) and compute $D^{(i)}$. Obviously, sampling from one or the other is equivalent as mentioned above. In figure \ref{fig:estimation} we plot the estimation against the theoretical degree function and a interval of size $\varepsilon = 0.02$ around $d_{\pi}(x)$. In theory, we expect $\lvert D^{(i)} - d_{\pi}(x) \rvert > \varepsilon$ with probability $0.0025$.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{plots/d_estimator.pdf}
+  \caption{Estimator with sample from graphons \ref{eq:graphon} and \ref{eq:graphon_perm} with $n = 40$ and $\varepsilon = 0.05$}
+  \label{fig:estimation}
+\end{figure}
+\fi
+% --- Bibliography
+\newpage
+% \printbibliography
+\pagenumbering{gobble} % stop page numbering
+
+\end{document}

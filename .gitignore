@@ -329,3 +329,4 @@ TSWLatexianTemp*
 # Data
 wiot-data
 .vscode
+.env

@@ -1,20 +1,10 @@
-using DotEnv
-using XLSX, JSON, Downloads
-
-CFG = DotEnv.config()
-cache = get(CFG, "CACHE", "") == "true"
-verbose = get(CFG, "VERBOSE", "") == "true"
-outdir = get(CFG, "WIOT_LOCAL_DATA", "data")
-
-include("scripts/importxlsx.jl")
-
 """
 Import WIOT data from directory. Normalization:
 - normalize = 0 for no normalization
 - normalize = 1 to normalize across all 
 - normalize = 2 to normalize within time
 """
-function gettablesfromyears(year::String; directory = ".")::Matrix{Float64}
+function gettablesfromyears(year::String; directory = datapath)::Matrix{Float64}
     data = JSON.parsefile(joinpath(directory, "$(year).json"))
 	table = hcat(data["table"]...) # FIXME: Inefficient spread
     return table
@@ -22,7 +12,7 @@ end
 function gettablesfromyears(years::Int64...; kwargs...)
     gettablesfromyears(string.(years)...; kwargs...)
 end
-function gettablesfromyears(years::String...; normalize = -1, directory = "")::Array{Float64, 3}
+function gettablesfromyears(years::String...; normalize = -1, directory = datapath)::Array{Float64, 3}
     W₀ = gettablesfromyears(first(years); directory = directory)
     N = size(W₀, 1)
     T = length(years)
@@ -43,13 +33,13 @@ function gettablesfromyears(years::String...; normalize = -1, directory = "")::A
     return tables
 
 end
-function gettablesfromyears(;directory = "", kwargs...)
+function gettablesfromyears(;directory = datapath, kwargs...)
     files = readdir(directory)
     years = replace.(files, ".json" => "")
     return gettablesfromyears(years...; directory = directory, kwargs...)
 end
 
-function getcolumns(; directory = ".")
+function getcolumns(; directory = datapath)
     firstfile = directory |> readdir |> first
     data = JSON.parsefile(joinpath(directory, firstfile))
 
@@ -79,24 +69,3 @@ function getcountriesdata(columns::Vector{Tuple{String, String}}, tables::Array{
 
     return @view(tables[:, idx, idx]), columns[idx]
 end
-
-
-ismain = abspath(PROGRAM_FILE) == @__FILE__
-if ismain && !cache
-    # TODO: The years 2010 and 2011 have "sep" and an extre url path.
-
-    years = 1995:2009
-    for y ∈ years
-        year = string(y)
-        verbose && print("Downloading $(year)...\r")
-    
-        data = makeurl(year) |> downloadxlsx
-
-        open(joinpath(outdir, "$(year).json"), "w") do io
-            write(io, json(data))
-        end
-    end
-
-    print("\n...done!")
-end
-

@@ -330,3 +330,6 @@ TSWLatexianTemp*
 wiot-data
 .vscode
 .env
+
+# Plots
+plots/

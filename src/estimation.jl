@@ -17,14 +17,14 @@ e(X::Nodes, Y::Nodes; G::Graph) = c(X, Y; G = G) / (length(X) * length(Y))
 
 "Algorithm 1 of Cai, Ackerman, Freer (2020)"
 function iterstep(G::Graph, P::Partition, l::Int64, decay::Float64)::Partition 
-
+    n = G.V[end]
     Q = [[1]]
     cᵧ = [1]
 
     ε = 1
 
     while length(Q) < l
-        @showprogress "Iteration, |Q| = $(length(Q))..." for i ∈ 2:n
+        for i ∈ 2:n
 
             d(j) = sum(
                 length(Pᵣ) * 
@@ -32,6 +32,7 @@ function iterstep(G::Graph, P::Partition, l::Int64, decay::Float64)::Partition
             ) / n
             
             dᵥ = d.(1:length(cᵧ))
+
             jᵐ = argmin(dᵥ)
 
             if dᵥ[jᵐ] < ε
@@ -41,7 +42,8 @@ function iterstep(G::Graph, P::Partition, l::Int64, decay::Float64)::Partition
                 push!(cᵧ, i) 
             end
 
-            ε = ε * decay
+
+            ε = ε * (1 - decay)
         end
     end
 
@@ -58,10 +60,7 @@ function isfe(G::Graph, T::Int64; l = 10, decay = 0.05)
 
     for _ in 1:T
         P = last(Phistory)
-        try
-            
-        catch
-        end
+
         P′= iterstep(G, P, l, decay)
         push!(Phistory, P′)
     end
